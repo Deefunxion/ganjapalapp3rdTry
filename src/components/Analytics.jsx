@@ -147,6 +147,7 @@ const Analytics = () => {
           </CardContent>
         </Card>
       </div>
+
       {/* Charts Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Strain Performance Chart */}
