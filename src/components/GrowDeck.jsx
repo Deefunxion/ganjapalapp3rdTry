@@ -336,15 +336,9 @@ const ZoneGrid = ({ zone, plants, onPlantSelect, onPlantDelete, selectedPlant })
   }
 
   if (config.layout === 'planter') {
-    // 4-5-4 layout: 13 slots
-    // Slot order: [0-3] top, [4-8] middle, [9-12] bottom
-    const slotMap = [
-      { row: 0, col: 0 }, { row: 0, col: 1 }, { row: 0, col: 2 }, { row: 0, col: 3 },
-      { row: 1, col: 0 }, { row: 1, col: 1 }, { row: 1, col: 2 }, { row: 1, col: 3 }, { row: 1, col: 4 },
-      { row: 2, col: 0 }, { row: 2, col: 1 }, { row: 2, col: 2 }, { row: 2, col: 3 }
-    ];
-    // Map plants to slots by their allocationIndex or order in zonePlants
-    const slots = Array(13).fill(null);
+    // 4-4-4 layout: 12 slots
+    // Slot order: [0-3] top, [4-7] middle, [8-11] bottom
+    const slots = Array(12).fill(null);
     zonePlants.forEach((plant, i) => {
       slots[i] = plant;
     });
@@ -355,7 +349,7 @@ const ZoneGrid = ({ zone, plants, onPlantSelect, onPlantDelete, selectedPlant })
             <MapPin className="w-4 h-4" />
             {config.name}
             <Badge variant="outline" className="ml-auto">
-              {zonePlants.length}/13
+              {zonePlants.length}/12
             </Badge>
           </CardTitle>
         </CardHeader>
@@ -380,10 +374,10 @@ const ZoneGrid = ({ zone, plants, onPlantSelect, onPlantDelete, selectedPlant })
                 </div>
               ))}
             </div>
-            {/* Middle row: 5 slots */}
-            <div className="flex gap-2 justify-center">
-              {[4,5,6,7,8].map(idx => (
-                <div key={idx} className="flex-1 min-w-0 max-w-[120px]">
+            {/* Middle row: 4 slots */}
+            <div className="flex gap-2">
+              {[4,5,6,7].map(idx => (
+                <div key={idx} className="flex-1 min-w-0">
                   {slots[idx] ? (
                     <PlantItem 
                       plant={slots[idx]} 
@@ -401,7 +395,7 @@ const ZoneGrid = ({ zone, plants, onPlantSelect, onPlantDelete, selectedPlant })
             </div>
             {/* Bottom row: 4 slots */}
             <div className="flex gap-2">
-              {[9,10,11,12].map(idx => (
+              {[8,9,10,11].map(idx => (
                 <div key={idx} className="flex-1 min-w-0">
                   {slots[idx] ? (
                     <PlantItem 
