@@ -3,7 +3,7 @@ export const ZONE_TYPES = {
   MEGALOS_TRAY: 'megalos-tray',
   ZARDINIERA: 'zardiniera', 
   MIKROS_TRAY: 'mikros-tray',
-  MEGALH_STROGGYLH: 'megalh-stroggylh'
+  MEGALA_GLASTRAKLA: 'megala-glastrakla'
 };
 
 export const TRAINING_METHODS = {
@@ -80,7 +80,7 @@ export const samplePlants = [
     id: '3',
     strainNumber: 3,
     strainType: 'Mirko Nice #2',
-    zone: ZONE_TYPES.MEGALH_STROGGYLH,
+    zone: ZONE_TYPES.MEGALA_GLASTRAKLA,
     position: { x: 1, y: 0 },
     leafStatus: 0.8,
     internodesNumber: 0.8,

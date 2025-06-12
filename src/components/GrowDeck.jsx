@@ -51,14 +51,13 @@ const PlantItem = ({ plant, onSelect, onDelete, isSelected }) => {
           </Button>
         </div>
       </div>
-      
       <div className="text-xs text-muted-foreground mb-1 truncate">
         {plant.strainType}
       </div>
-      
       <div className="flex items-center justify-between">
         <span className={`text-sm font-medium text-green-600`}>
-          {plant.totalMediumValue?.toFixed(2) || '0.00'}
+          {/* Label changed to 'Total Score' */}
+          Total Score: {plant.totalMediumValue?.toFixed(2) || '0.00'}
         </span>
         <div className="flex gap-1">
           {plant.trainingMethods?.map((method, idx) => (
@@ -217,7 +216,7 @@ const ZoneGrid = ({ zone, plants, onPlantSelect, onPlantDelete, selectedPlant })
             <div className="mt-4 pt-4 border-t border-gray-200">
               <div className="grid grid-cols-3 gap-4 text-sm">
                 <div className="text-center">
-                  <p className="text-muted-foreground">Avg Score</p>
+                  <p className="text-muted-foreground">Avg Total Score</p>
                   <p className="font-semibold text-green-600">
                     {(zonePlants.reduce((sum, p) => sum + p.totalMediumValue, 0) / zonePlants.length).toFixed(3)}
                   </p>
@@ -311,7 +310,7 @@ const ZoneGrid = ({ zone, plants, onPlantSelect, onPlantDelete, selectedPlant })
             <div className="mt-4 pt-4 border-t border-gray-200">
               <div className="grid grid-cols-3 gap-4 text-sm">
                 <div className="text-center">
-                  <p className="text-muted-foreground">Avg Score</p>
+                  <p className="text-muted-foreground">Avg Total Score</p>
                   <p className="font-semibold text-green-600">
                     {(zonePlants.reduce((sum, p) => sum + p.totalMediumValue, 0) / zonePlants.length).toFixed(3)}
                   </p>
@@ -338,15 +337,26 @@ const ZoneGrid = ({ zone, plants, onPlantSelect, onPlantDelete, selectedPlant })
 
   if (config.layout === 'planter') {
     const { rows, cols } = config.gridSize;
-    const grid = Array(rows).fill().map(() => Array(cols).fill(null));
-    
+    // 4-3-4 layout: middle row (row 1) has only 3 slots, centered
+    const grid = [];
+    for (let y = 0; y < rows; y++) {
+      if (y === 1) {
+        // Middle row: 3 slots, centered
+        const rowArr = [null, null, null, null];
+        for (let x = 0; x < 3; x++) rowArr[x + 0.5] = null; // center 3 slots
+        grid.push(rowArr);
+      } else {
+        grid.push(Array(cols).fill(null));
+      }
+    }
     zonePlants.forEach(plant => {
       const { x, y } = plant.position;
-      if (x < cols && y < rows) {
+      if (y === 1 && x > 0 && x < 4) {
+        grid[y][x] = plant;
+      } else if (y !== 1 && x < cols) {
         grid[y][x] = plant;
       }
     });
-    
     return (
       <Card className="mb-6">
         <CardHeader className="pb-3">
@@ -363,27 +373,23 @@ const ZoneGrid = ({ zone, plants, onPlantSelect, onPlantDelete, selectedPlant })
             {grid.flat().map((plant, idx) => {
               const row = Math.floor(idx / cols);
               const col = idx % cols;
-              const isMiddleRow = row === 1;
-              // For 4-3-4 layout: middle row (row 1) should only show center slot (col 1)
-              const isMiddleSection = isMiddleRow && col === 1;
-              
+              // For 4-3-4 layout: only show 3 slots in middle row (col 0,1,2)
+              if (row === 1 && (col === 0 || col === 3)) {
+                return <div key={idx} className="aspect-square min-h-[80px]" />;
+              }
               return (
                 <div key={idx} className="aspect-square min-h-[80px]">
-                  {isMiddleSection || !isMiddleRow ? (
-                    plant ? (
-                      <PlantItem 
-                        plant={plant} 
-                        onSelect={onPlantSelect}
-                        onDelete={onPlantDelete}
-                        isSelected={selectedPlant?.id === plant.id}
-                      />
-                    ) : (
-                      <div className="w-full h-full border-2 border-dashed border-gray-200 rounded-lg flex items-center justify-center hover:border-gray-300 transition-colors">
-                        <Plus className="w-4 h-4 text-gray-400" />
-                      </div>
-                    )
+                  {plant ? (
+                    <PlantItem 
+                      plant={plant} 
+                      onSelect={onPlantSelect}
+                      onDelete={onPlantDelete}
+                      isSelected={selectedPlant?.id === plant.id}
+                    />
                   ) : (
-                    <div className="w-full h-full bg-gray-100 rounded-lg"></div>
+                    <div className="w-full h-full border-2 border-dashed border-gray-200 rounded-lg flex items-center justify-center hover:border-gray-300 transition-colors">
+                      <Plus className="w-4 h-4 text-gray-400" />
+                    </div>
                   )}
                 </div>
               );
@@ -395,7 +401,7 @@ const ZoneGrid = ({ zone, plants, onPlantSelect, onPlantDelete, selectedPlant })
             <div className="mt-4 pt-4 border-t border-gray-200">
               <div className="grid grid-cols-3 gap-4 text-sm">
                 <div className="text-center">
-                  <p className="text-muted-foreground">Avg Score</p>
+                  <p className="text-muted-foreground">Avg Total Score</p>
                   <p className="font-semibold text-green-600">
                     {(zonePlants.reduce((sum, p) => sum + p.totalMediumValue, 0) / zonePlants.length).toFixed(3)}
                   </p>

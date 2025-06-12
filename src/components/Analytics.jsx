@@ -9,16 +9,6 @@ import {
   CartesianGrid, 
   Tooltip, 
   ResponsiveContainer,
-  RadarChart,
-  PolarGrid,
-  PolarAngleAxis,
-  PolarRadiusAxis,
-  Radar,
-  PieChart,
-  Pie,
-  Cell,
-  LineChart,
-  Line
 } from 'recharts';
 import { 
   TrendingUp, 
@@ -220,81 +210,14 @@ const Analytics = () => {
                 <XAxis 
                   dataKey="strainNumber" 
                   tick={{ fontSize: 12 }}
+                  label={{ value: 'Strain Number', position: 'insideBottom', offset: -5 }}
                 />
-                <YAxis domain={[0, 1]} />
+                <YAxis domain={[0, 1]} label={{ value: 'Total Score', angle: -90, position: 'insideLeft' }} />
                 <Tooltip 
-                  formatter={(value, name) => [value.toFixed(3), 'Score']}
+                  formatter={(value, name) => [value.toFixed(3), 'Total Score']}
                   labelFormatter={(label) => `Plant #${label}`}
                 />
                 <Bar dataKey="score" fill="#10b981" />
-              </BarChart>
-            </ResponsiveContainer>
-          </CardContent>
-        </Card>
-
-        {/* Phenotype Characteristics Radar */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg">Average Phenotype Characteristics</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <ResponsiveContainer width="100%" height={300}>
-              <RadarChart data={radarData}>
-                <PolarGrid />
-                <PolarAngleAxis dataKey="characteristic" tick={{ fontSize: 10 }} />
-                <PolarRadiusAxis domain={[0, 100]} tick={false} />
-                <Radar
-                  name="Average"
-                  dataKey="value"
-                  stroke="#3b82f6"
-                  fill="#3b82f6"
-                  fillOpacity={0.3}
-                />
-              </RadarChart>
-            </ResponsiveContainer>
-          </CardContent>
-        </Card>
-
-        {/* Training Methods Distribution */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg">Training Methods Distribution</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <ResponsiveContainer width="100%" height={300}>
-              <PieChart>
-                <Pie
-                  data={trainingData}
-                  cx="50%"
-                  cy="50%"
-                  outerRadius={100}
-                  fill="#8884d8"
-                  dataKey="count"
-                  label={({ method, percentage }) => `${method} (${percentage}%)`}
-                >
-                  {trainingData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                  ))}
-                </Pie>
-                <Tooltip />
-              </PieChart>
-            </ResponsiveContainer>
-          </CardContent>
-        </Card>
-
-        {/* Zone Distribution */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg">Zone Distribution</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <ResponsiveContainer width="100%" height={300}>
-              <BarChart data={zoneData} layout="horizontal">
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis type="number" />
-                <YAxis dataKey="zone" type="category" width={100} tick={{ fontSize: 10 }} />
-                <Tooltip />
-                <Bar dataKey="count" fill="#f59e0b" />
               </BarChart>
             </ResponsiveContainer>
           </CardContent>
