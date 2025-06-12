@@ -336,24 +336,17 @@ const ZoneGrid = ({ zone, plants, onPlantSelect, onPlantDelete, selectedPlant })
   }
 
   if (config.layout === 'planter') {
-    const { rows, cols } = config.gridSize;
-    // 4-3-4 layout: middle row (row 1) has only 3 slots, centered
-    const grid = [];
-    for (let y = 0; y < rows; y++) {
-      if (y === 1) {
-        // Middle row: 3 slots, centered in 4 columns (col 0 and 3 empty)
-        grid.push([null, null, null, null]);
-      } else {
-        grid.push(Array(cols).fill(null));
-      }
-    }
-    zonePlants.forEach(plant => {
-      const { x, y } = plant.position;
-      if (y === 1 && x > 0 && x < 4) {
-        grid[y][x] = plant;
-      } else if (y !== 1 && x < cols) {
-        grid[y][x] = plant;
-      }
+    // 4-3-4 layout: 11 slots
+    // Slot order: [0-3] top, [4-6] middle, [7-10] bottom
+    const slotMap = [
+      { row: 0, col: 0 }, { row: 0, col: 1 }, { row: 0, col: 2 }, { row: 0, col: 3 },
+      { row: 1, col: 1 }, { row: 1, col: 2 }, { row: 1, col: 3 },
+      { row: 2, col: 0 }, { row: 2, col: 1 }, { row: 2, col: 2 }, { row: 2, col: 3 }
+    ];
+    // Map plants to slots by their allocationIndex or order in zonePlants
+    const slots = Array(11).fill(null);
+    zonePlants.forEach((plant, i) => {
+      slots[i] = plant;
     });
     return (
       <Card className="mb-6">
@@ -362,38 +355,72 @@ const ZoneGrid = ({ zone, plants, onPlantSelect, onPlantDelete, selectedPlant })
             <MapPin className="w-4 h-4" />
             {config.name}
             <Badge variant="outline" className="ml-auto">
-              {zonePlants.length}/{config.capacity}
+              {zonePlants.length}/11
             </Badge>
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid gap-2" style={{ gridTemplateColumns: `repeat(${cols}, 1fr)` }}>
-            {grid.flat().map((plant, idx) => {
-              const row = Math.floor(idx / cols);
-              const col = idx % cols;
-              // For 4-3-4 layout: only show 3 slots in middle row (col 1,2,3)
-              if (row === 1 && (col === 0 || col === 3)) {
-                return <div key={idx} className="aspect-square min-h-[80px]" />;
-              }
-              return (
-                <div key={idx} className="aspect-square min-h-[80px]">
-                  {plant ? (
+          <div className="flex flex-col gap-2">
+            {/* Top row: 4 slots */}
+            <div className="flex gap-2">
+              {[0,1,2,3].map(idx => (
+                <div key={idx} className="flex-1 min-w-0">
+                  {slots[idx] ? (
                     <PlantItem 
-                      plant={plant} 
+                      plant={slots[idx]} 
                       onSelect={onPlantSelect}
                       onDelete={onPlantDelete}
-                      isSelected={selectedPlant?.id === plant.id}
+                      isSelected={selectedPlant?.id === slots[idx].id}
                     />
                   ) : (
-                    <div className="w-full h-full border-2 border-dashed border-gray-200 rounded-lg flex items-center justify-center hover:border-gray-300 transition-colors">
+                    <div className="aspect-square min-h-[80px] w-full border-2 border-dashed border-gray-200 rounded-lg flex items-center justify-center hover:border-gray-300 transition-colors">
                       <Plus className="w-4 h-4 text-gray-400" />
                     </div>
                   )}
                 </div>
-              );
-            })}
+              ))}
+            </div>
+            {/* Middle row: 3 slots, centered */}
+            <div className="flex gap-2 justify-center">
+              <div className="flex-1" />
+              {[4,5,6].map(idx => (
+                <div key={idx} className="flex-1 min-w-0 max-w-[120px]">
+                  {slots[idx] ? (
+                    <PlantItem 
+                      plant={slots[idx]} 
+                      onSelect={onPlantSelect}
+                      onDelete={onPlantDelete}
+                      isSelected={selectedPlant?.id === slots[idx].id}
+                    />
+                  ) : (
+                    <div className="aspect-square min-h-[80px] w-full border-2 border-dashed border-gray-200 rounded-lg flex items-center justify-center hover:border-gray-300 transition-colors">
+                      <Plus className="w-4 h-4 text-gray-400" />
+                    </div>
+                  )}
+                </div>
+              ))}
+              <div className="flex-1" />
+            </div>
+            {/* Bottom row: 4 slots */}
+            <div className="flex gap-2">
+              {[7,8,9,10].map(idx => (
+                <div key={idx} className="flex-1 min-w-0">
+                  {slots[idx] ? (
+                    <PlantItem 
+                      plant={slots[idx]} 
+                      onSelect={onPlantSelect}
+                      onDelete={onPlantDelete}
+                      isSelected={selectedPlant?.id === slots[idx].id}
+                    />
+                  ) : (
+                    <div className="aspect-square min-h-[80px] w-full border-2 border-dashed border-gray-200 rounded-lg flex items-center justify-center hover:border-gray-300 transition-colors">
+                      <Plus className="w-4 h-4 text-gray-400" />
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
           </div>
-          
           {/* Per-Tray Analytics Summary */}
           {zonePlants.length > 0 && (
             <div className="mt-4 pt-4 border-t border-gray-200">
