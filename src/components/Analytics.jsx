@@ -70,33 +70,6 @@ const Analytics = () => {
     strainNumber: plant.strainNumber
   }));
 
-  // Training method distribution
-  const trainingMethodCounts = plants.reduce((acc, plant) => {
-    plant.trainingMethods?.forEach(method => {
-      acc[method] = (acc[method] || 0) + 1;
-    });
-    return acc;
-  }, {});
-
-  const trainingData = Object.entries(trainingMethodCounts).map(([method, count]) => ({
-    method: method.toUpperCase(),
-    count,
-    percentage: ((count / plants.length) * 100).toFixed(1)
-  }));
-
-  // Zone distribution
-  const zoneDistribution = plants.reduce((acc, plant) => {
-    const zoneName = zoneConfigs[plant.zone]?.name || plant.zone;
-    acc[zoneName] = (acc[zoneName] || 0) + 1;
-    return acc;
-  }, {});
-
-  const zoneData = Object.entries(zoneDistribution).map(([zone, count]) => ({
-    zone,
-    count,
-    percentage: ((count / plants.length) * 100).toFixed(1)
-  }));
-
   // Top performers
   const topPerformers = [...plants]
     .sort((a, b) => b.totalMediumValue - a.totalMediumValue)
@@ -110,27 +83,6 @@ const Analytics = () => {
   const avgScore = plants.length > 0 ? (plants.reduce((sum, plant) => sum + plant.totalMediumValue, 0) / plants.length).toFixed(3) : '0.000';
   const highPerformers = plants.filter(plant => plant.totalMediumValue >= 0.8).length;
   const lowPerformers = plants.filter(plant => plant.totalMediumValue < 0.6).length;
-
-  // Phenotype characteristics radar data
-  const avgCharacteristics = plants.length > 0 ? {
-    leafStatus: (plants.reduce((sum, p) => sum + p.leafStatus, 0) / plants.length).toFixed(2),
-    internodes: (plants.reduce((sum, p) => sum + p.internodesNumber, 0) / plants.length).toFixed(2),
-    spacing: (plants.reduce((sum, p) => sum + p.internodesSpacing, 0) / plants.length).toFixed(2),
-    height: (plants.reduce((sum, p) => sum + p.height, 0) / plants.length).toFixed(2),
-    width: (plants.reduce((sum, p) => sum + p.width, 0) / plants.length).toFixed(2),
-    symmetry: (plants.reduce((sum, p) => sum + p.symmetry, 0) / plants.length).toFixed(2)
-  } : {};
-
-  const radarData = [
-    { characteristic: 'Leaf Status', value: parseFloat(avgCharacteristics.leafStatus || 0) * 100 },
-    { characteristic: 'Internodes', value: parseFloat(avgCharacteristics.internodes || 0) * 100 },
-    { characteristic: 'Spacing', value: parseFloat(avgCharacteristics.spacing || 0) * 100 },
-    { characteristic: 'Height', value: parseFloat(avgCharacteristics.height || 0) * 100 },
-    { characteristic: 'Width', value: parseFloat(avgCharacteristics.width || 0) * 100 },
-    { characteristic: 'Symmetry', value: parseFloat(avgCharacteristics.symmetry || 0) * 100 }
-  ];
-
-  const COLORS = ['#10b981', '#3b82f6', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4'];
 
   return (
     <div className="space-y-6">
