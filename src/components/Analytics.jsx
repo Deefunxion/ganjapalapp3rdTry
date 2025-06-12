@@ -1,0 +1,342 @@
+import React, { useState, useEffect } from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { 
+  BarChart, 
+  Bar, 
+  XAxis, 
+  YAxis, 
+  CartesianGrid, 
+  Tooltip, 
+  ResponsiveContainer,
+  RadarChart,
+  PolarGrid,
+  PolarAngleAxis,
+  PolarRadiusAxis,
+  Radar,
+  PieChart,
+  Pie,
+  Cell,
+  LineChart,
+  Line
+} from 'recharts';
+import { 
+  TrendingUp, 
+  Award, 
+  Target,
+  Leaf,
+  Scissors,
+  Star
+} from 'lucide-react';
+import { samplePlants, getScoreColor, ZONE_TYPES, zoneConfigs } from '../data/plantData';
+import AppStorage from '../utils/storage';
+
+const Analytics = () => {
+  const [plants, setPlants] = useState([]);
+  const [refreshKey, setRefreshKey] = useState(0);
+
+  // Load plants and set up refresh mechanism
+  useEffect(() => {
+    const loadPlants = () => {
+      const storedPlants = AppStorage.getPlantProfiles();
+      if (storedPlants.length > 0) {
+        setPlants(storedPlants);
+      } else {
+        setPlants(samplePlants);
+      }
+    };
+
+    loadPlants();
+
+    // Listen for storage changes to update analytics dynamically
+    const handleStorageChange = () => {
+      loadPlants();
+      setRefreshKey(prev => prev + 1);
+    };
+
+    // Listen for custom events from import operations
+    window.addEventListener('plantsUpdated', handleStorageChange);
+    window.addEventListener('storage', handleStorageChange);
+
+    return () => {
+      window.removeEventListener('plantsUpdated', handleStorageChange);
+      window.removeEventListener('storage', handleStorageChange);
+    };
+  }, [refreshKey]);
+
+  // Prepare data for charts
+  const strainPerformanceData = plants.map(plant => ({
+    strain: plant.strainType.substring(0, 15) + '...',
+    score: plant.totalMediumValue,
+    height: plant.height,
+    symmetry: plant.symmetry,
+    leafStatus: plant.leafStatus,
+    internodes: plant.internodesNumber,
+    spacing: plant.internodesSpacing,
+    width: plant.width,
+    rootSpaghetti: plant.rootSpaghetti,
+    stemRigidity: plant.stemRigidity,
+    sideShootActivation: plant.sideShootActivation,
+    strainNumber: plant.strainNumber
+  }));
+
+  // Training method distribution
+  const trainingMethodCounts = plants.reduce((acc, plant) => {
+    plant.trainingMethods?.forEach(method => {
+      acc[method] = (acc[method] || 0) + 1;
+    });
+    return acc;
+  }, {});
+
+  const trainingData = Object.entries(trainingMethodCounts).map(([method, count]) => ({
+    method: method.toUpperCase(),
+    count,
+    percentage: ((count / plants.length) * 100).toFixed(1)
+  }));
+
+  // Zone distribution
+  const zoneDistribution = plants.reduce((acc, plant) => {
+    const zoneName = zoneConfigs[plant.zone]?.name || plant.zone;
+    acc[zoneName] = (acc[zoneName] || 0) + 1;
+    return acc;
+  }, {});
+
+  const zoneData = Object.entries(zoneDistribution).map(([zone, count]) => ({
+    zone,
+    count,
+    percentage: ((count / plants.length) * 100).toFixed(1)
+  }));
+
+  // Top performers
+  const topPerformers = [...plants]
+    .sort((a, b) => b.totalMediumValue - a.totalMediumValue)
+    .slice(0, 5);
+
+  // Keeper phenotypes
+  const keeperPhenos = plants.filter(plant => plant.isKeeperPheno);
+  const cloneCandidates = plants.filter(plant => plant.isCandidateForCloning);
+
+  // Performance metrics
+  const avgScore = plants.length > 0 ? (plants.reduce((sum, plant) => sum + plant.totalMediumValue, 0) / plants.length).toFixed(3) : '0.000';
+  const highPerformers = plants.filter(plant => plant.totalMediumValue >= 0.8).length;
+  const lowPerformers = plants.filter(plant => plant.totalMediumValue < 0.6).length;
+
+  // Phenotype characteristics radar data
+  const avgCharacteristics = plants.length > 0 ? {
+    leafStatus: (plants.reduce((sum, p) => sum + p.leafStatus, 0) / plants.length).toFixed(2),
+    internodes: (plants.reduce((sum, p) => sum + p.internodesNumber, 0) / plants.length).toFixed(2),
+    spacing: (plants.reduce((sum, p) => sum + p.internodesSpacing, 0) / plants.length).toFixed(2),
+    height: (plants.reduce((sum, p) => sum + p.height, 0) / plants.length).toFixed(2),
+    width: (plants.reduce((sum, p) => sum + p.width, 0) / plants.length).toFixed(2),
+    symmetry: (plants.reduce((sum, p) => sum + p.symmetry, 0) / plants.length).toFixed(2)
+  } : {};
+
+  const radarData = [
+    { characteristic: 'Leaf Status', value: parseFloat(avgCharacteristics.leafStatus || 0) * 100 },
+    { characteristic: 'Internodes', value: parseFloat(avgCharacteristics.internodes || 0) * 100 },
+    { characteristic: 'Spacing', value: parseFloat(avgCharacteristics.spacing || 0) * 100 },
+    { characteristic: 'Height', value: parseFloat(avgCharacteristics.height || 0) * 100 },
+    { characteristic: 'Width', value: parseFloat(avgCharacteristics.width || 0) * 100 },
+    { characteristic: 'Symmetry', value: parseFloat(avgCharacteristics.symmetry || 0) * 100 }
+  ];
+
+  const COLORS = ['#10b981', '#3b82f6', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4'];
+
+  return (
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <TrendingUp className="w-6 h-6 text-blue-600" />
+          <h2 className="text-2xl font-bold">Analytics Dashboard</h2>
+        </div>
+        <Badge variant="outline" className="text-sm">
+          {plants.length} plants analyzed • Last updated: {new Date().toLocaleDateString()}
+        </Badge>
+      </div>
+
+      {/* Key Metrics */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-muted-foreground">Average Score</p>
+                <p className="text-2xl font-bold text-green-600">{avgScore}</p>
+              </div>
+              <Target className="w-8 h-8 text-green-600" />
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-muted-foreground">High Performers</p>
+                <p className="text-2xl font-bold text-blue-600">{highPerformers}</p>
+              </div>
+              <Award className="w-8 h-8 text-blue-600" />
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-muted-foreground">Keeper Phenos</p>
+                <p className="text-2xl font-bold text-purple-600">{keeperPhenos.length}</p>
+              </div>
+              <Star className="w-8 h-8 text-purple-600" />
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-muted-foreground">Clone Candidates</p>
+                <p className="text-2xl font-bold text-orange-600">{cloneCandidates.length}</p>
+              </div>
+              <Scissors className="w-8 h-8 text-orange-600" />
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Charts Grid */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Strain Performance Chart */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg">Strain Performance Comparison</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ResponsiveContainer width="100%" height={300}>
+              <BarChart data={strainPerformanceData}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis 
+                  dataKey="strainNumber" 
+                  tick={{ fontSize: 12 }}
+                />
+                <YAxis domain={[0, 1]} />
+                <Tooltip 
+                  formatter={(value, name) => [value.toFixed(3), 'Score']}
+                  labelFormatter={(label) => `Plant #${label}`}
+                />
+                <Bar dataKey="score" fill="#10b981" />
+              </BarChart>
+            </ResponsiveContainer>
+          </CardContent>
+        </Card>
+
+        {/* Phenotype Characteristics Radar */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg">Average Phenotype Characteristics</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ResponsiveContainer width="100%" height={300}>
+              <RadarChart data={radarData}>
+                <PolarGrid />
+                <PolarAngleAxis dataKey="characteristic" tick={{ fontSize: 10 }} />
+                <PolarRadiusAxis domain={[0, 100]} tick={false} />
+                <Radar
+                  name="Average"
+                  dataKey="value"
+                  stroke="#3b82f6"
+                  fill="#3b82f6"
+                  fillOpacity={0.3}
+                />
+              </RadarChart>
+            </ResponsiveContainer>
+          </CardContent>
+        </Card>
+
+        {/* Training Methods Distribution */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg">Training Methods Distribution</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ResponsiveContainer width="100%" height={300}>
+              <PieChart>
+                <Pie
+                  data={trainingData}
+                  cx="50%"
+                  cy="50%"
+                  outerRadius={100}
+                  fill="#8884d8"
+                  dataKey="count"
+                  label={({ method, percentage }) => `${method} (${percentage}%)`}
+                >
+                  {trainingData.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                  ))}
+                </Pie>
+                <Tooltip />
+              </PieChart>
+            </ResponsiveContainer>
+          </CardContent>
+        </Card>
+
+        {/* Zone Distribution */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg">Zone Distribution</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ResponsiveContainer width="100%" height={300}>
+              <BarChart data={zoneData} layout="horizontal">
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis type="number" />
+                <YAxis dataKey="zone" type="category" width={100} tick={{ fontSize: 10 }} />
+                <Tooltip />
+                <Bar dataKey="count" fill="#f59e0b" />
+              </BarChart>
+            </ResponsiveContainer>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Top Performers */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-lg flex items-center gap-2">
+            <Award className="w-5 h-5" />
+            Top Performing Plants
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+            {topPerformers.map((plant, index) => (
+              <div key={plant.id} className="p-4 border rounded-lg bg-gradient-to-br from-green-50 to-blue-50">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="font-mono text-sm font-semibold">#{plant.strainNumber}</span>
+                  <Badge variant={index === 0 ? "default" : "secondary"} className="text-xs">
+                    #{index + 1}
+                  </Badge>
+                </div>
+                <p className="text-xs text-muted-foreground mb-2 truncate">{plant.strainType}</p>
+                <div className="flex items-center justify-between">
+                  <span className="text-lg font-bold text-green-600">
+                    {plant.totalMediumValue.toFixed(3)}
+                  </span>
+                  <div className="flex gap-1">
+                    {plant.isKeeperPheno && <Star className="w-3 h-3 text-yellow-500" />}
+                    {plant.isCandidateForCloning && <Scissors className="w-3 h-3 text-blue-500" />}
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
+};
+
+export default Analytics;
+
