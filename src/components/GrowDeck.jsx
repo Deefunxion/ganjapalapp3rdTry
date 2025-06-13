@@ -336,11 +336,13 @@ const ZoneGrid = ({ zone, plants, onPlantSelect, onPlantDelete, selectedPlant })
   }
 
   if (config.layout === 'planter') {
-    // 4-4-4 layout: 12 slots
-    // Slot order: [0-3] top, [4-7] middle, [8-11] bottom
-    const slots = Array(12).fill(null);
+    const rowLayout = config.rowLayout || [4, 4, 4];
+    const totalSlots = rowLayout.reduce((sum, n) => sum + n, 0);
+    const slots = Array(totalSlots).fill(null);
     zonePlants.forEach((plant, i) => {
-      slots[i] = plant;
+      if (i < totalSlots) {
+        slots[i] = plant;
+      }
     });
     return (
       <Card className="mb-6">
@@ -349,69 +351,38 @@ const ZoneGrid = ({ zone, plants, onPlantSelect, onPlantDelete, selectedPlant })
             <MapPin className="w-4 h-4" />
             {config.name}
             <Badge variant="outline" className="ml-auto">
-              {zonePlants.length}/12
+              {zonePlants.length}/{config.capacity}
             </Badge>
           </CardTitle>
         </CardHeader>
         <CardContent>
           <div className="flex flex-col gap-2">
-            {/* Top row: 4 slots */}
-            <div className="flex gap-2">
-              {[0,1,2,3].map(idx => (
-                <div key={idx} className="flex-1 min-w-0">
-                  {slots[idx] ? (
-                    <PlantItem 
-                      plant={slots[idx]} 
-                      onSelect={onPlantSelect}
-                      onDelete={onPlantDelete}
-                      isSelected={selectedPlant?.id === slots[idx].id}
-                    />
-                  ) : (
-                    <div className="aspect-square min-h-[80px] w-full border-2 border-dashed border-gray-200 rounded-lg flex items-center justify-center hover:border-gray-300 transition-colors">
-                      <Plus className="w-4 h-4 text-gray-400" />
-                    </div>
-                  )}
+            {rowLayout.map((count, rowIdx) => {
+              const start = rowLayout.slice(0, rowIdx).reduce((a, b) => a + b, 0);
+              return (
+                <div className="flex gap-2" key={rowIdx}>
+                  {Array.from({ length: count }).map((_, i) => {
+                    const idx = start + i;
+                    return (
+                      <div key={idx} className="flex-1 min-w-0">
+                        {slots[idx] ? (
+                          <PlantItem
+                            plant={slots[idx]}
+                            onSelect={onPlantSelect}
+                            onDelete={onPlantDelete}
+                            isSelected={selectedPlant?.id === slots[idx].id}
+                          />
+                        ) : (
+                          <div className="aspect-square min-h-[80px] w-full border-2 border-dashed border-gray-200 rounded-lg flex items-center justify-center hover:border-gray-300 transition-colors">
+                            <Plus className="w-4 h-4 text-gray-400" />
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
                 </div>
-              ))}
-            </div>
-            {/* Middle row: 4 slots */}
-            <div className="flex gap-2">
-              {[4,5,6,7].map(idx => (
-                <div key={idx} className="flex-1 min-w-0">
-                  {slots[idx] ? (
-                    <PlantItem 
-                      plant={slots[idx]} 
-                      onSelect={onPlantSelect}
-                      onDelete={onPlantDelete}
-                      isSelected={selectedPlant?.id === slots[idx].id}
-                    />
-                  ) : (
-                    <div className="aspect-square min-h-[80px] w-full border-2 border-dashed border-gray-200 rounded-lg flex items-center justify-center hover:border-gray-300 transition-colors">
-                      <Plus className="w-4 h-4 text-gray-400" />
-                    </div>
-                  )}
-                </div>
-              ))}
-            </div>
-            {/* Bottom row: 4 slots */}
-            <div className="flex gap-2">
-              {[8,9,10,11].map(idx => (
-                <div key={idx} className="flex-1 min-w-0">
-                  {slots[idx] ? (
-                    <PlantItem 
-                      plant={slots[idx]} 
-                      onSelect={onPlantSelect}
-                      onDelete={onPlantDelete}
-                      isSelected={selectedPlant?.id === slots[idx].id}
-                    />
-                  ) : (
-                    <div className="aspect-square min-h-[80px] w-full border-2 border-dashed border-gray-200 rounded-lg flex items-center justify-center hover:border-gray-300 transition-colors">
-                      <Plus className="w-4 h-4 text-gray-400" />
-                    </div>
-                  )}
-                </div>
-              ))}
-            </div>
+              );
+            })}
           </div>
           {/* Per-Tray Analytics Summary */}
           {zonePlants.length > 0 && (
@@ -500,8 +471,8 @@ const GrowDeck = () => {
     return matchesZone && matchesSearch;
   });
 
-  const zonesToShow = activeZone === 'all' 
-    ? Object.keys(ZONE_TYPES) 
+  const zonesToShow = activeZone === 'all'
+    ? Object.values(ZONE_TYPES)
     : [activeZone];
 
   return (

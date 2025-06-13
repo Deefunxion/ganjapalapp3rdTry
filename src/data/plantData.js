@@ -199,6 +199,7 @@ export const zoneConfigs = {
     name: 'Ζαρντινιέρα',
     layout: 'planter',
     gridSize: { rows: 3, cols: 4 },
+    rowLayout: [4, 3, 4],
     capacity: 11,
     color: 'zone-zardiniera'
   },
